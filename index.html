@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>برنامج الطبيب - نظام إدارة العيادات والوصفة الإلكترونية</title>
+<style>
+  :root{
+    --bg:#eef2f6; --panel:#f7f9fc; --border:#c9d3df; --header:#dbe5f1;
+    --primary:#1e6fbf; --primary-d:#0f4f8f; --accent:#2aa56b;
+    --danger:#c0392b; --warn:#d49a1d; --text:#1f2937; --muted:#5b6776;
+    --row-alt:#f1f5fb; --row-hover:#d8e6f5; --shadow:0 6px 18px rgba(15,40,80,.08);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:"Segoe UI","Tahoma",Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+  button{font-family:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit;font-size:14px;border:1px solid var(--border);background:#fff;padding:6px 8px;border-radius:4px;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(30,111,191,.18)}
+  table{border-collapse:collapse;width:100%;background:#fff;font-size:13px}
+  th{background:var(--header);color:#0f3a66;font-weight:700;padding:7px 6px;border:1px solid var(--border);text-align:center}
+  td{padding:6px;border:1px solid #dde4ec;text-align:center}
+  tbody tr:nth-child(even){background:var(--row-alt)}
+  tbody tr:hover{background:var(--row-hover);cursor:pointer}
+  tbody tr.sel{background:#c9ddf3 !important;font-weight:600}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,#fff,#eaf0f8);border-bottom:1px solid var(--border);padding:6px 14px;height:42px}
+  .topbar .menu{display:flex;gap:18px;color:#37495e;font-size:13px}
+  .topbar .menu span{cursor:pointer;padding:4px 6px;border-radius:4px}
+  .topbar .menu span:hover{background:#dce6f2;color:var(--primary-d)}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--primary-d)}
+  .brand .logo{width:30px;height:30px;border-radius:6px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:900}
+
+  .app{display:grid;grid-template-rows:42px 1fr 28px;height:100vh}
+  .main{display:grid;grid-template-columns:340px 1fr;overflow:hidden}
+  .sidebar{background:linear-gradient(180deg,#fff,#eef3fb);border-left:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:18px 14px;gap:8px}
+  .doctor{width:220px;height:220px;background:#fff;border-radius:50%;display:grid;place-items:center;box-shadow:var(--shadow);overflow:hidden;border:6px solid #fff}
+  .doctor svg{width:170px;height:170px}
+  .sidebar h1{font-size:30px;color:var(--primary-d);margin:14px 0 0}
+  .sidebar .ver{color:var(--muted);font-size:12px;margin-bottom:8px}
+  .stats-mini{margin-top:auto;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .stat{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center}
+  .stat .n{color:var(--primary-d);font-size:20px;font-weight:800}
+  .stat .l{color:var(--muted);font-size:12px}
+
+  .content{background:var(--bg);overflow:auto;padding:18px}
+  .statusbar{display:flex;justify-content:space-between;align-items:center;background:#fff;border-top:1px solid var(--border);padding:0 14px;font-size:12px;color:var(--muted)}
+
+  .module-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:680px;margin:20px auto}
+  .module{background:#fff;border:1px solid var(--border);border-radius:8px;padding:18px 10px;text-align:center;transition:.15s;box-shadow:0 1px 0 #fff inset, 0 2px 6px rgba(20,50,90,.04)}
+  .module:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:var(--primary)}
+  .module .ico{width:54px;height:54px;margin:0 auto 8px;display:grid;place-items:center;border-radius:10px;background:#eaf2fb;color:var(--primary-d)}
+  .module .ico svg{width:32px;height:32px}
+  .module .lbl{font-weight:700;color:#26425f}
+  .module.exit .ico{background:#fde8e6;color:var(--danger)}
+  .module.set .ico{background:#fff4dd;color:var(--warn)}
+
+  .page{background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow)}
+  .page-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:linear-gradient(180deg,#eaf2fb,#dceaf7);border-bottom:1px solid var(--border)}
+  .page-head .title{display:flex;align-items:center;gap:12px;color:var(--primary-d);font-size:24px;font-weight:800}
+  .page-head .title svg{width:32px;height:32px}
+  .page-head .right{display:flex;gap:10px;align-items:center}
+  .chip{background:#fff;border:1px solid var(--border);border-radius:6px;padding:6px 12px;display:flex;align-items:center;gap:8px;color:#26425f;font-weight:600}
+  .chip .num{background:var(--primary);color:#fff;border-radius:4px;padding:2px 10px;min-width:28px;text-align:center}
+
+  .page-body{padding:14px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:#f3f6fb;border:1px solid var(--border);border-radius:6px;margin-top:10px}
+  .btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(180deg,#fff,#e8eef6);border:1px solid var(--border);color:#26425f;padding:7px 12px;border-radius:5px;font-weight:600;font-size:13px}
+  .btn:hover{background:#dceaf7;border-color:var(--primary)}
+  .btn.primary{background:linear-gradient(180deg,var(--primary),var(--primary-d));color:#fff;border-color:var(--primary-d)}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .btn.success{background:linear-gradient(180deg,#2aa56b,#1d8a55);color:#fff;border-color:#1d8a55}
+  .btn.danger{background:linear-gradient(180deg,#e25c4d,#b3392b);color:#fff;border-color:#a83020}
+  .btn.warn{background:linear-gradient(180deg,#f3c14a,#c9941b);color:#3a2c00;border-color:#b18316}
+  .btn.wa{background:linear-gradient(180deg,#25d366,#128c4f);color:#fff;border-color:#0d6a3a}
+  .btn svg{width:16px;height:16px}
+
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .row > label{color:#26425f;font-weight:600;min-width:70px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .panel{background:#fff;border:1px solid var(--border);border-radius:6px;padding:10px}
+  .panel h3{margin:0 0 10px;color:var(--primary-d);font-size:14px;border-bottom:1px dashed var(--border);padding-bottom:6px}
+
+  .tabs{display:flex;gap:2px;border-bottom:2px solid var(--primary);margin:10px 0}
+  .tab{padding:8px 14px;background:#e8eef6;border:1px solid var(--border);border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;font-weight:600;color:#26425f;font-size:13px}
+  .tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+  .modal-back{position:fixed;inset:0;background:rgba(20,40,70,.45);display:none;align-items:center;justify-content:center;z-index:50}
+  .modal-back.show{display:flex}
+  .modal{background:#fff;border-radius:10px;min-width:420px;max-width:92vw;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:pop .2s}
+  @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,var(--primary),var(--primary-d));color:#fff;padding:10px 14px}
+  .modal-head h3{margin:0;font-size:16px}
+  .modal-head .x{background:transparent;border:none;color:#fff;font-size:22px;cursor:pointer}
+  .modal-body{padding:16px}
+  .modal-foot{padding:10px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:#f6f8fc}
+
+  .toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 18px;border-radius:6px;z-index:99;opacity:0;transition:.3s}
+  .toast.show{opacity:1;bottom:60px}
+
+  .login{position:fixed;inset:0;background:linear-gradient(135deg,#1e6fbf,#0f3a66);display:flex;align-items:center;justify-content:center;z-index:100}
+  .login.hide{display:none}
+  .login-box{background:#fff;border-radius:12px;padding:30px 36px;min-width:360px;box-shadow:0 25px 60px rgba(0,0,0,.4)}
+  .login-box h2{margin:0 0 6px;color:var(--primary-d);text-align:center}
+  .login-box p{margin:0 0 20px;color:var(--muted);text-align:center;font-size:13px}
+  .login-box label{display:block;color:#26425f;font-weight:600;margin:10px 0 4px}
+  .login-box input{width:100%}
+  .login-box .btn{width:100%;justify-content:center;margin-top:16px;padding:10px}
+
+  .print-only{display:none}
+  @media print{
+    body * {visibility:hidden}
+    .print-area, .print-area *{visibility:visible}
+    .print-area{position:absolute;inset:0;padding:20px}
+    .print-only{display:block}
+    .no-print{display:none !important}
+  }
+  .rx-sheet{background:#fff;padding:24px;max-width:780px;margin:0 auto;border:1px solid #ccc}
+  .rx-head{display:flex;justify-content:space-between;border-bottom:2px solid var(--primary);padding-bottom:10px;margin-bottom:14px}
+  .rx-head h2{margin:0;color:var(--primary-d)}
+  .rx-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:14px}
+  .rx-block{margin-top:14px}
+  .rx-block h4{margin:0 0 6px;background:#eaf2fb;padding:6px 10px;border-right:4px solid var(--primary);color:var(--primary-d)}
+  .rx-block ul{margin:6px 0;padding-right:22px}
+
+  .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:700}
+  .pill.wait{background:#fff4dd;color:#8a5a00}
+  .pill.done{background:#d9f3e2;color:#1b6b3b}
+  .pill.cancel{background:#fde2dd;color:#8a1f12}
+
+  .empty{text-align:center;color:var(--muted);padding:40px;font-size:14px}
+  .log-entry{padding:4px 8px;border-bottom:1px solid #eee;font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="login" id="login">
+  <div class="login-box">
+    <h2>برنامج الطبيب</h2>
+    <p>نظام إدارة العيادات والوصفة الإلكترونية</p>
+    <label>اسم المستخدم</label>
+    <input id="lg-user" value="ADMIN" />
+    <label>كلمة المرور</label>
+    <input id="lg-pass" type="password" value="123" />
+    <button class="btn primary" onclick="doLogin()">دخول</button>
+    <p style="margin-top:14px;font-size:12px">الافتراضي: ADMIN / 123</p>
+  </div>
+</div>
+
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">ط</div>
+      <div>برنامج الطبيب <span style="color:var(--muted);font-weight:400;font-size:12px">v8.0</span></div>
+    </div>
+    <div class="menu">
+      <span onclick="go('home')">الرئيسية</span>
+      <span onclick="go('settings')">الإعدادات</span>
+      <span onclick="go('stats')">إحصائيات</span>
+      <span onclick="exportData()">نسخ احتياطي</span>
+      <span onclick="importData()">استرداد</span>
+      <span onclick="logout()" style="color:var(--danger)">تسجيل خروج</span>
+    </div>
+  </div>
+
+  <div class="main">
+    <aside class="sidebar">
+      <div class="doctor">
+        <svg viewBox="0 0 200 200">
+          <circle cx="100" cy="80" r="40" fill="#f5d7b8"/>
+          <path d="M60 80c0-30 18-48 40-48s40 18 40 48v6c0 4-4 6-8 6H68c-4 0-8-2-8-6z" fill="#3b2317"/>
+          <ellipse cx="86" cy="85" rx="4" ry="5" fill="#222"/>
+          <ellipse cx="114" cy="85" rx="4" ry="5" fill="#222"/>
+          <path d="M86 105q14 12 28 0" stroke="#222" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M50 200v-50c0-22 22-30 50-30s50 8 50 30v50z" fill="#fff" stroke="#cfd5db" stroke-width="2"/>
+          <path d="M85 120l15 30 15-30" fill="none" stroke="#cfd5db" stroke-width="2"/>
+          <path d="M80 130c-10 5-14 18-10 30" stroke="#3aa6c9" stroke-width="3" fill="none"/>
+          <path d="M120 130c10 5 14 18 10 30" stroke="#3aa6c9" stroke-width="3" fill="none"/>
+          <circle cx="125" cy="165" r="6" fill="#3aa6c9"/>
+        </svg>
+      </div>
+      <h1>برنامج الطبيب</h1>
+      <div class="ver">Version : 8.0</div>
+      <div class="stats-mini">
+        <div class="stat"><div class="n" id="mini-today">0</div><div class="l">حجوزات اليوم</div></div>
+        <div class="stat"><div class="n" id="mini-wait">0</div><div class="l">في الانتظار</div></div>
+        <div class="stat"><div class="n" id="mini-pat">0</div><div class="l">إجمالي المرضى</div></div>
+        <div class="stat"><div class="n" id="mini-cash">0</div><div class="l">خزينة اليوم</div></div>
+      </div>
+    </aside>
+
+    <section class="content" id="content"></section>
+  </div>
+
+  <div class="statusbar">
+    <span>المستخدم: <b id="sb-user">ADMIN</b></span>
+    <span>فرع رقم : <b>8</b></span>
+    <span id="sb-clinic">مركز الورد</span>
+    <span id="sb-date"></span>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-back" id="modal"></div>
+
+<script>
+/* ==================== دوال أساسية ==================== */
+const LS_KEY='clinic_db_v1';
+const defaultDB={
+  settings:{clinic:'مركز الورد',branch:8,doctor:'د. محمد مرتضى',price:100,
+    waMsg:'السلام عليكم، نؤكد حضرتكم لميعاد الحجز لدينا بتاريخ {date} - {time}.',
+    instructionsTemplates:['تناول الدواء بكثرة الماء يوميا','الراحة التامة لمدة 3 أيام','الامتناع عن الأطعمة الدهنية'],
+    complaintsTemplates:['صداع','ألم في البطن','ارتفاع حرارة','سعال','دوار'],
+    labsTemplates:[{group:'CBC',tests:['Hb','WBC','RBC','PLT']},{group:'Liver',tests:['ALT','AST','ALP','Bilirubin']},{group:'Kidney',tests:['Urea','Creatinine','Na','K']}],
+    radioTemplates:[{name:'X-Ray',regions:['Chest','Knee','Spine']},{name:'CT',regions:['Brain','Abdomen']},{name:'MRI',regions:['Brain','Spine']}],
+    medicines:['Augmentin 1g','Panadol 500mg','Brufen 400mg','Ventolin Inhaler','Nexium 40mg','Concor 5mg']
+  },
+  users:[{u:'ADMIN',p:'123',role:'admin'}],
+  patients:[], bookings:[], visits:[], cash:[], purchases:[], operations:[], log:[]
+};
+
+/* --- معالجة البيانات والتخزين --- */
+function escapeHTML(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+let DB = load();
+function load(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(LS_KEY));
+    if (raw) {
+      // فك تشفير كلمات المرور من localStorage
+      if (raw.users) raw.users.forEach(u => { if (u.p) u.p = atob(u.p); });
+      return {...defaultDB, ...raw, settings:{...defaultDB.settings, ...(raw.settings||{})}};
+    }
+  }catch(e){}
+  // لا توجد بيانات، استخدم الافتراضيات
+  const fresh = structuredClone(defaultDB);
+  fresh.log.push({time:new Date().toISOString(),msg:'تم إنشاء قاعدة بيانات جديدة'});
+  return fresh;
+}
+function save(){
+  const cloned = JSON.parse(JSON.stringify(DB));
+  cloned.users.forEach(u => { if (u.p) u.p = btoa(u.p); });
+  localStorage.setItem(LS_KEY, JSON.stringify(cloned));
+  refreshMini();
+}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200)}
+function modal({title,body,foot}){
+  const m=$('#modal');
+  m.innerHTML=`<div class="modal"><div class="modal-head"><h3>${escapeHTML(title)}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-body">${body}</div>${foot?`<div class="modal-foot">${foot}</div>`:''}</div>`;
+  m.classList.add('show'); return m;
+}
+function closeModal(){$('#modal').classList.remove('show');$('#modal').innerHTML=''}
+function confirmBox(msg,cb){
+  modal({title:'تأكيد',body:`<p>${escapeHTML(msg)}</p>`,foot:`<button class="btn" onclick="closeModal()">إلغاء</button><button class="btn danger" id="cf-ok">تأكيد</button>`});
+  $('#cf-ok').onclick=()=>{closeModal();cb()};
+}
+function fmtDate(d){const x=new Date(d);return x.toLocaleDateString('en-GB')}
+function todayISO(){return new Date().toISOString().slice(0,10)}
+
+/* --- سجل النشاطات --- */
+function addLog(msg){
+  if(!DB.log) DB.log=[];
+  DB.log.push({time:new Date().toISOString(),msg:msg});
+}
+
+/* --- التنقل بين الصفحات --- */
+const pages={};
+function go(p,arg){ if(!pages[p]) p='home'; $('#content').innerHTML=''; pages[p]($('#content'),arg); window.scrollTo(0,0); refreshMini(); }
+
+/* ===== HOME ===== */
+pages.home=(root)=>{
+  const items=[
+    ['bookings','الحجز',iconCalendar()],
+    ['exam','الكشف',iconStethoscope()],
+    ['operations','العمليات',iconUser()],
+    ['search','بحث',iconSearch()],
+    ['dues','المستحقات',iconMoney()],
+    ['cash','الخزينة',iconSafe()],
+    ['purchases','المشتريات',iconBox(),''],
+    ['stats','إحصائيات',iconChart()],
+    ['users','تغيير مستخدم',iconUserSwitch()],
+    ['data','البيانات',iconFolder()],
+    ['log','سجل النشاطات',iconLog()],
+    ['settings','الإعدادات',iconGear(),'set'],
+    ['exit','خروج',iconExit(),'exit']
+  ];
+  root.innerHTML=`<div class="page-head" style="background:transparent;border:none;padding:0;justify-content:center;flex-direction:column">
+    <div class="title">نظام إدارة العيادات والوصفة الإلكترونية</div>
+    <div style="color:var(--muted);margin-top:4px">اختر الوحدة المطلوبة للبدء</div>
+  </div>
+  <div class="module-grid">${items.map(([k,l,svg,c=''])=>`
+    <div class="module ${c}" onclick="${k==='exit'?'logout()':`go('${k}')`}">
+      <div class="ico">${svg}</div><div class="lbl">${l}</div>
+    </div>`).join('')}
+  </div>`;
+};
+
+/* ===== BOOKINGS ===== */
+pages.bookings=(root)=>{
+  let date = todayISO();
+  let q='';
+  let selId=null;
+  const render=()=>{
+    const list = DB.bookings.filter(b=>b.date===date && (!q || (b.name||'').includes(q)));
+    root.innerHTML=`
+    <div class="page">
+      <div class="page-head">
+        <div class="title">${iconCalendar()} الحجز</div>
+        <div class="right">
+          <div class="chip">شاشة الإنتظار <span class="num">${list.filter(x=>x.status==='wait').length}</span></div>
+          <div class="chip">منتهية <span class="num">${list.filter(x=>x.status==='done').length}</span></div>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="row">
+          <label>بحث :</label><input id="q" value="${escapeHTML(q)}" placeholder="اسم المريض"/>
+          <label>التاريخ :</label><input type="date" id="dt" value="${date}"/>
+        </div>
+        <div style="margin-top:12px">
+          <table id="tbl">
+            <thead><tr><th>#</th><th>الاسم</th><th>الوقت</th><th>إجمالي</th><th>مدفوع</th><th>خصم</th><th>باقي</th><th>الحالة</th></tr></thead>
+            <tbody>${list.length?list.map((b,i)=>`<tr data-id="${b.id}" class="${b.id===selId?'sel':''}">
+              <td>${i+1}</td><td>${escapeHTML(b.name)}</td><td>${escapeHTML(b.time||'-')}</td>
+              <td>${b.total||0}</td><td>${b.paid||0}</td><td>${b.discount||0}</td>
+              <td>${(b.total||0)-(b.paid||0)-(b.discount||0)}</td>
+              <td><span class="pill ${b.status}">${b.status==='wait'?'انتظار':b.status==='done'?'تم الكشف':'ملغي'}</span></td>
+            </tr>`).join(''):`<tr><td colspan="8" class="empty">لا توجد حجوزات لهذا اليوم</td></tr>`}</tbody>
+          </table>
+        </div>
+        <div class="toolbar">
+          <button class="btn success" onclick="bookingForm()">${iconPlus()} إضافة حجز</button>
+          <button class="btn warn" id="ed">${iconEdit()} تعديل</button>
+          <button class="btn danger" id="dl">${iconTrash()} حذف</button>
+          <button class="btn" id="se">${iconSearch()} بحث</button>
+          <button class="btn primary" id="ex">${iconStethoscope()} بدء الكشف</button>
+          <button class="btn wa" id="wa">${iconWa()} إرسال تذكير</button>
+          <button class="btn" onclick="go('home')">${iconExit()} خروج</button>
+        </div>
+      </div>
+    </div>`;
+    $('#q').oninput=e=>{q=e.target.value;render()};
+    $('#dt').onchange=e=>{date=e.target.value;render()};
+    $$('#tbl tbody tr[data-id]').forEach(tr=>tr.onclick=()=>{selId=tr.dataset.id;render()});
+    $('#ed').onclick=()=>{if(!selId)return toast('اختر حجزاً');bookingForm(selId)};
+    $('#dl').onclick=()=>{if(!selId)return toast('اختر حجزاً');confirmBox('حذف الحجز؟',()=>{DB.bookings=DB.bookings.filter(b=>b.id!==selId);addLog('حذف حجز');save();selId=null;render();toast('تم الحذف')})};
+    $('#se').onclick=()=>{const v=prompt('ابحث باسم المريض:');if(v!==null){q=v;render()}};
+    $('#ex').onclick=()=>{if(!selId)return toast('اختر حجزاً');const b=DB.bookings.find(x=>x.id===selId);go('examForm',b)};
+    $('#wa').onclick=()=>{if(!selId)return toast('اختر حجزاً');const b=DB.bookings.find(x=>x.id===selId);const msg=DB.settings.waMsg.replace('{date}',b.date).replace('{time}',b.time||'');const url=`https://wa.me/${(b.phone||'').replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`;window.open(url,'_blank')};
+  };
+  render();
+};
+
+function bookingForm(id){
+  const b = id?{...DB.bookings.find(x=>x.id===id)}:{id:uid(),date:todayISO(),time:'10:00',total:DB.settings.price,paid:0,discount:0,status:'wait',gender:'male',ageU:'سنة'};
+  const oldPaid = b.paid || 0;
+  modal({title:id?'تعديل حجز':'إضافة حجز جديد',body:`
+    <div class="grid2">
+      <div><label>اسم المريض</label><input id="f-name" value="${escapeHTML(b.name||'')}" /></div>
+      <div><label>الهاتف</label><input id="f-phone" value="${escapeHTML(b.phone||'')}" /></div>
+      <div><label>التاريخ</label><input type="date" id="f-date" value="${b.date}"/></div>
+      <div><label>الوقت</label><input type="time" id="f-time" value="${b.time||'10:00'}"/></div>
+      <div><label>السن</label><input type="number" id="f-age" value="${b.age||0}"/></div>
+      <div><label>النوع</label><select id="f-gender"><option value="male" ${b.gender==='male'?'selected':''}>ذكر</option><option value="female" ${b.gender==='female'?'selected':''}>أنثى</option></select></div>
+      <div><label>إجمالي</label><input type="number" id="f-total" value="${b.total||0}"/></div>
+      <div><label>مدفوع</label><input type="number" id="f-paid" value="${b.paid||0}"/></div>
+      <div><label>خصم</label><input type="number" id="f-disc" value="${b.discount||0}"/></div>
+      <div><label>الحالة</label><select id="f-status">
+        <option value="wait" ${b.status==='wait'?'selected':''}>انتظار</option>
+        <option value="done" ${b.status==='done'?'selected':''}>تم الكشف</option>
+        <option value="cancel" ${b.status==='cancel'?'selected':''}>ملغي</option>
+      </select></div>
+      <div style="grid-column:1/-1"><label>ملاحظات</label><textarea id="f-note" rows="2" style="width:100%">${escapeHTML(b.note||'')}</textarea></div>
+    </div>`,foot:`<button class="btn" onclick="closeModal()">إلغاء</button><button class="btn success" id="sv">حفظ</button>`});
+  $('#sv').onclick=()=>{
+    const o={...b,name:$('#f-name').value.trim(),phone:$('#f-phone').value.trim(),date:$('#f-date').value,time:$('#f-time').value,
+      age:+$('#f-age').value,gender:$('#f-gender').value,total:+$('#f-total').value,paid:+$('#f-paid').value,discount:+$('#f-disc').value,
+      status:$('#f-status').value,note:$('#f-note').value};
+    if(!o.name)return toast('أدخل الاسم');
+    let p = DB.patients.find(x => x.fileNo === b.fileNo);
+    if (!p) p = DB.patients.find(x => x.name === o.name && (x.phone||'') === (o.phone||''));
+    if(!p){p={id:uid(),fileNo:1000+DB.patients.length+1,name:o.name,phone:o.phone,age:o.age,gender:o.gender};DB.patients.push(p)}
+    o.patientId=p.id; o.fileNo=p.fileNo;
+    const i=DB.bookings.findIndex(x=>x.id===o.id);
+    if(i>=0){
+      if (o.paid !== oldPaid) {
+        const diff = o.paid - oldPaid;
+        if (diff > 0) DB.cash.push({id:uid(),date:o.date,type:'in',amount:diff,note:'تعديل دفع حجز - '+o.name});
+        else if (diff < 0) DB.cash.push({id:uid(),date:o.date,type:'out',amount:Math.abs(diff),note:'تعديل دفع حجز - '+o.name});
+      }
+      DB.bookings[i]=o;
+    } else {
+      DB.bookings.push(o);
+      if(o.paid>0) DB.cash.push({id:uid(),date:o.date,type:'in',amount:o.paid,note:'دفع حجز - '+o.name});
+    }
+    addLog(id?'تعديل حجز '+o.name:'إضافة حجز '+o.name);
+    save();closeModal();go('bookings');toast('تم الحفظ');
+  };
+}
+
+/* ===== EXAM ===== */
+pages.exam=(root)=>{
+  let q='';
+  const render=()=>{
+    const date=todayISO();
+    const list=DB.bookings.filter(b=>b.date===date && (!q || b.name.includes(q)));
+    root.innerHTML=`
+    <div class="page">
+      <div class="page-head">
+        <div class="title">${iconStethoscope()} الكشف</div>
+        <div class="right">
+          <div class="chip">قائمة المرضى - ${escapeHTML(DB.settings.doctor)}</div>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="row"><label>بحث :</label><input id="q" value="${escapeHTML(q)}"/></div>
+        <table style="margin-top:10px"><thead><tr><th>#</th><th>الاسم</th><th>الوقت</th><th>الحالة</th><th>إجراء</th></tr></thead>
+          <tbody>${list.length?list.map((b,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(b.name)}</td><td>${escapeHTML(b.time)}</td>
+            <td><span class="pill ${b.status}">${b.status==='wait'?'انتظار':b.status==='done'?'تم':'ملغي'}</span></td>
+            <td><button class="btn primary" data-id="${b.id}">فتح ملف الكشف</button></td></tr>`).join(''):`<tr><td colspan="5" class="empty">لا يوجد مرضى</td></tr>`}</tbody>
+        </table>
+        <div class="toolbar">
+          <button class="btn" onclick="go('bookings')">${iconCalendar()} الحجز</button>
+          <button class="btn" onclick="go('search')">${iconSearch()} بحث</button>
+          <button class="btn" onclick="go('home')">${iconExit()} خروج</button>
+        </div>
+      </div>
+    </div>`;
+    $('#q').oninput=e=>{q=e.target.value;render()};
+    $$('button[data-id]',root).forEach(b=>b.onclick=()=>{const bk=DB.bookings.find(x=>x.id===b.dataset.id);go('examForm',bk)});
+  };render();
+};
+
+/* ===== EXAM FORM (tabs) ===== */
+pages.examForm=(root,booking)=>{
+  if(!booking) return go('exam');
+  let visit=DB.visits.find(v=>v.bookingId===booking.id);
+  if(!visit){visit={id:uid(),bookingId:booking.id,patientId:booking.patientId,date:booking.date,vitals:{},complaint:'',history:'',examination:'',diagnosis:'',comment:'',meds:[],labs:[],radio:[],instructions:[],results:''};DB.visits.push(visit);}
+  let tab='info';
+  const patient=DB.patients.find(p=>p.id===booking.patientId)||{};
+  const prevVisits=DB.visits.filter(v=>v.patientId===booking.patientId).sort((a,b)=>a.date.localeCompare(b.date));
+  const render=()=>{
+    root.innerHTML=`
+    <div class="page">
+      <div class="page-head">
+        <div class="title">${iconStethoscope()} الكشف <span style="color:var(--muted);font-size:14px">${escapeHTML(patient.name||'')} - ملف رقم ${patient.fileNo||''}</span></div>
+        <div class="right"><div class="chip">زيارات: <b>${prevVisits.length}</b></div></div>
+      </div>
+      <div class="page-body">
+        <div class="tabs" id="tabs">
+          ${['info|معلومات','gen|فحص عام','eye|فحص عين','meds|أدوية','lab|تحاليل','rad|أشعة','ins|تعليمات','res|نتائج','prev|زيارات سابقة'].map(t=>{const[k,l]=t.split('|');return `<div class="tab ${tab===k?'active':''}" data-t="${k}">${l}</div>`}).join('')}
+        </div>
+        <div id="tabBody"></div>
+        <div class="toolbar">
+          <button class="btn success" onclick="saveVisit('${visit.id}')">${iconSave()} حفظ الكشف</button>
+          <button class="btn primary" onclick="printRx('${visit.id}')">${iconPrint()} روشتة / طباعة</button>
+          <button class="btn warn" onclick="markDone('${booking.id}')">${iconCheck()} تم الكشف</button>
+          <button class="btn" id="backBtn">${iconExit()} رجوع</button>
+        </div>
+      </div>
+    </div>`;
+    $$('#tabs .tab').forEach(el=>el.onclick=()=>{tab=el.dataset.t;render()});
+    $('#backBtn').onclick=()=>{if(confirm('هل تريد المغادرة؟ قد تفقد التغييرات غير المحفوظة.')) go('exam');};
+    renderTab();
+  };
+  const renderTab=()=>{
+    const b=$('#tabBody'); const v=visit;
+    if(tab==='info'){
+      b.innerHTML=`<div class="grid2">
+        <div class="panel"><h3>بيانات المريض</h3>
+          <div class="row"><label>الاسم</label><input value="${escapeHTML(patient.name||'')}" onchange="window.patient.name=this.value"/></div>
+          <div class="row"><label>السن</label><input type="number" value="${patient.age||0}" onchange="window.patient.age=+this.value"/></div>
+          <div class="row"><label>الهاتف</label><input value="${escapeHTML(patient.phone||'')}" onchange="window.patient.phone=this.value"/></div>
+          <div class="row"><label>النوع</label><select onchange="window.patient.gender=this.value"><option value="male" ${patient.gender==='male'?'selected':''}>ذكر</option><option value="female" ${patient.gender==='female'?'selected':''}>أنثى</option></select></div>
+        </div>
+        <div class="panel"><h3>زيارات المريض</h3>
+          ${prevVisits.length?`<table><thead><tr><th>#</th><th>التاريخ</th><th>التشخيص</th></tr></thead><tbody>${prevVisits.map((x,i)=>`<tr><td>${i+1}</td><td>${x.date}</td><td>${escapeHTML(x.diagnosis||'-')}</td></tr>`).join('')}</tbody></table>`:`<div class="empty">لا توجد زيارات سابقة</div>`}
+        </div></div>`;
+    }
+    if(tab==='gen'){
+      const vt=v.vitals;
+      b.innerHTML=`<div class="panel"><h3>الفحص العام</h3>
+        <div class="grid4">
+          ${[['B.P','bp'],['Pulse','pulse'],['Temp.','temp'],['RR','rr'],['Sug.','sug'],['Weig.','weight'],['Heig.','height'],['BMI','bmi']].map(([l,k])=>`<div><label>${l}</label><input value="${escapeHTML(vt[k]||'')}" data-k="${k}"/></div>`).join('')}
+        </div>
+        <div style="margin-top:12px" class="grid2">
+          ${[['Complaint','complaint'],['History','history'],['Examination','examination'],['Diagnosis','diagnosis'],['Comment','comment']].map(([l,k])=>`<div><label>${l}</label><textarea data-f="${k}" rows="2" style="width:100%">${escapeHTML(v[k]||'')}</textarea></div>`).join('')}
+        </div></div>`;
+      $$('input[data-k]',b).forEach(i=>i.oninput=e=>vt[e.target.dataset.k]=e.target.value);
+      $$('textarea[data-f]',b).forEach(i=>i.oninput=e=>v[e.target.dataset.f]=e.target.value);
+    }
+    if(tab==='eye'){
+      v.eye=v.eye||{rightVA:'',leftVA:'',rightIOP:'',leftIOP:'',notes:''};
+      b.innerHTML=`<div class="panel"><h3>فحص العين</h3><div class="grid2">
+        <div><label>VA يمين</label><input value="${escapeHTML(v.eye.rightVA)}" onchange="visit.eye.rightVA=this.value"/></div>
+        <div><label>VA يسار</label><input value="${escapeHTML(v.eye.leftVA)}" onchange="visit.eye.leftVA=this.value"/></div>
+        <div><label>IOP يمين</label><input value="${escapeHTML(v.eye.rightIOP)}" onchange="visit.eye.rightIOP=this.value"/></div>
+        <div><label>IOP يسار</label><input value="${escapeHTML(v.eye.leftIOP)}" onchange="visit.eye.leftIOP=this.value"/></div>
+        <div style="grid-column:1/-1"><label>ملاحظات</label><textarea rows="3" style="width:100%" onchange="visit.eye.notes=this.value">${escapeHTML(v.eye.notes)}</textarea></div>
+      </div></div>`;
+    }
+    if(tab==='meds'){
+      b.innerHTML=`<div class="panel"><h3>الأدوية (Medications)</h3>
+        <div class="row">
+          <select id="med-sel"><option value="">— اختر دواء —</option>${DB.settings.medicines.map(m=>`<option>${escapeHTML(m)}</option>`).join('')}</select>
+          <input id="med-dose" placeholder="الجرعة (مثال: قرص × 3 يوميا)" style="flex:1"/>
+          <button class="btn success" id="add-med">${iconPlus()} إضافة</button>
+        </div>
+        <table style="margin-top:10px"><thead><tr><th>#</th><th>الدواء</th><th>الجرعة</th><th>حذف</th></tr></thead>
+        <tbody>${v.meds.length?v.meds.map((m,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(m.name)}</td><td>${escapeHTML(m.dose)}</td><td><button class="btn danger" data-i="${i}">×</button></td></tr>`).join(''):`<tr><td colspan="4" class="empty">لا توجد أدوية</td></tr>`}</tbody></table>`;
+      $('#add-med').onclick=()=>{const n=$('#med-sel').value,d=$('#med-dose').value.trim();if(!n)return toast('اختر دواء');v.meds.push({name:n,dose:d});renderTab()};
+      $$('button[data-i]',b).forEach(x=>x.onclick=()=>{v.meds.splice(+x.dataset.i,1);renderTab()});
+    }
+    if(tab==='lab'){
+      b.innerHTML=`<div class="panel"><h3>طلبات تحاليل</h3>
+        <div class="row">
+          <select id="lg">${DB.settings.labsTemplates.map(g=>`<option>${escapeHTML(g.group)}</option>`).join('')}</select>
+          <select id="lt"></select>
+          <button class="btn success" id="add-lab">${iconPlus()} إضافة</button>
+          <button class="btn" id="add-all">إضافة المجموعة كاملة</button>
+        </div>
+        <table style="margin-top:10px"><thead><tr><th>#</th><th>المجموعة</th><th>التحليل</th><th>حذف</th></tr></thead>
+        <tbody>${v.labs.length?v.labs.map((m,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(m.group)}</td><td>${escapeHTML(m.test)}</td><td><button class="btn danger" data-i="${i}">×</button></td></tr>`).join(''):`<tr><td colspan="4" class="empty">—</td></tr>`}</tbody></table>`;
+      const refT=()=>{const g=DB.settings.labsTemplates.find(x=>x.group===$('#lg').value);$('#lt').innerHTML=g.tests.map(t=>`<option>${escapeHTML(t)}</option>`).join('')};refT();
+      $('#lg').onchange=refT;
+      $('#add-lab').onclick=()=>{v.labs.push({group:$('#lg').value,test:$('#lt').value});renderTab()};
+      $('#add-all').onclick=()=>{const g=DB.settings.labsTemplates.find(x=>x.group===$('#lg').value);g.tests.forEach(t=>v.labs.push({group:g.group,test:t}));renderTab()};
+      $$('button[data-i]',b).forEach(x=>x.onclick=()=>{v.labs.splice(+x.dataset.i,1);renderTab()});
+    }
+    if(tab==='rad'){
+      b.innerHTML=`<div class="panel"><h3>طلبات أشعة</h3>
+        <div class="row">
+          <select id="rn">${DB.settings.radioTemplates.map(r=>`<option>${escapeHTML(r.name)}</option>`).join('')}</select>
+          <select id="rr"></select>
+          <button class="btn success" id="add-rad">${iconPlus()} إضافة</button>
+        </div>
+        <table style="margin-top:10px"><thead><tr><th>#</th><th>النوع</th><th>المنطقة</th><th>حذف</th></tr></thead>
+        <tbody>${v.radio.length?v.radio.map((m,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(m.name)}</td><td>${escapeHTML(m.region)}</td><td><button class="btn danger" data-i="${i}">×</button></td></tr>`).join(''):`<tr><td colspan="4" class="empty">—</td></tr>`}</tbody></table>`;
+      const refR=()=>{const r=DB.settings.radioTemplates.find(x=>x.name===$('#rn').value);$('#rr').innerHTML=r.regions.map(t=>`<option>${escapeHTML(t)}</option>`).join('')};refR();
+      $('#rn').onchange=refR;
+      $('#add-rad').onclick=()=>{v.radio.push({name:$('#rn').value,region:$('#rr').value});renderTab()};
+      $$('button[data-i]',b).forEach(x=>x.onclick=()=>{v.radio.splice(+x.dataset.i,1);renderTab()});
+    }
+    if(tab==='ins'){
+      b.innerHTML=`<div class="panel"><h3>تعليمات المريض</h3>
+        <div class="row">
+          <select id="ins-sel" style="flex:1"><option value="">— من القوالب —</option>${DB.settings.instructionsTemplates.map(x=>`<option>${escapeHTML(x)}</option>`).join('')}</select>
+          <input id="ins-cust" placeholder="أو اكتب تعليمة جديدة" style="flex:1"/>
+          <button class="btn success" id="add-ins">${iconPlus()} إضافة</button>
+        </div>
+        <table style="margin-top:10px"><thead><tr><th>#</th><th>التعليمة</th><th>حذف</th></tr></thead>
+        <tbody>${v.instructions.length?v.instructions.map((m,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(m)}</td><td><button class="btn danger" data-i="${i}">×</button></td></tr>`).join(''):`<tr><td colspan="3" class="empty">—</td></tr>`}</tbody></table>`;
+      $('#add-ins').onclick=()=>{const v1=$('#ins-cust').value.trim()||$('#ins-sel').value;if(!v1)return;v.instructions.push(v1);renderTab()};
+      $$('button[data-i]',b).forEach(x=>x.onclick=()=>{v.instructions.splice(+x.dataset.i,1);renderTab()});
+    }
+    if(tab==='res'){
+      b.innerHTML=`<div class="panel"><h3>نتائج / Results</h3>
+        <textarea rows="10" style="width:100%" onchange="visit.results=this.value">${escapeHTML(v.results||'')}</textarea></div>`;
+    }
+    if(tab==='prev'){
+      b.innerHTML=`<div class="panel"><h3>الزيارات السابقة</h3>
+        ${prevVisits.length?`<table><thead><tr><th>التاريخ</th><th>الشكوى</th><th>التشخيص</th><th>أدوية</th></tr></thead><tbody>${prevVisits.map(x=>`<tr><td>${x.date}</td><td>${escapeHTML(x.complaint||'-')}</td><td>${escapeHTML(x.diagnosis||'-')}</td><td>${escapeHTML((x.meds||[]).map(m=>m.name).join('، ')||'-')}</td></tr>`).join('')}</tbody></table>`:`<div class="empty">لا توجد زيارات</div>`}
+      </div>`;
+    }
+  };
+  window.visit=visit; window.patient=patient;
+  render();
+};
+
+window.saveVisit=(id)=>{
+  const v = DB.visits.find(x=>x.id===id);
+  if (v && window.patient) {
+    const p = DB.patients.find(x=>x.id===v.patientId);
+    if (p) Object.assign(p, window.patient);
+  }
+  addLog('حفظ كشف المريض '+window.patient.name);
+  save(); toast('تم حفظ بيانات الكشف');
+};
+
+window.markDone=(id)=>{
+  const b=DB.bookings.find(x=>x.id===id);
+  if(b){b.status='done';addLog('تم الكشف للحجز '+b.name);save();toast('تم تعليم الحجز كمنتهي');go('exam')}
+};
+
+window.printRx=(id)=>{
+  const v=DB.visits.find(x=>x.id===id);const p=DB.patients.find(x=>x.id===v.patientId)||{};
+  const html=`<div class="print-area rx-sheet">
+    <div class="rx-head"><div><h2>${escapeHTML(DB.settings.clinic)}</h2><div>${escapeHTML(DB.settings.doctor)}</div></div><div style="text-align:left">التاريخ: ${v.date}<br/>ملف رقم: ${p.fileNo||'-'}</div></div>
+    <div class="rx-info"><div><b>المريض:</b> ${escapeHTML(p.name||'')} &nbsp; <b>السن:</b> ${p.age||''} &nbsp; <b>النوع:</b> ${p.gender==='female'?'أنثى':'ذكر'}</div><div><b>الهاتف:</b> ${escapeHTML(p.phone||'-')}</div></div>
+    ${v.complaint?`<div class="rx-block"><h4>الشكوى</h4><div>${escapeHTML(v.complaint)}</div></div>`:''}
+    ${v.diagnosis?`<div class="rx-block"><h4>التشخيص</h4><div>${escapeHTML(v.diagnosis)}</div></div>`:''}
+    ${v.meds.length?`<div class="rx-block"><h4>الأدوية</h4><ul>${v.meds.map(m=>`<li><b>${escapeHTML(m.name)}</b> — ${escapeHTML(m.dose)}</li>`).join('')}</ul></div>`:''}
+    ${v.labs.length?`<div class="rx-block"><h4>تحاليل</h4><ul>${v.labs.map(m=>`<li>${escapeHTML(m.group)} — ${escapeHTML(m.test)}</li>`).join('')}</ul></div>`:''}
+    ${v.radio.length?`<div class="rx-block"><h4>أشعة</h4><ul>${v.radio.map(m=>`<li>${escapeHTML(m.name)} — ${escapeHTML(m.region)}</li>`).join('')}</ul></div>`:''}
+    ${v.instructions.length?`<div class="rx-block"><h4>تعليمات</h4><ul>${v.instructions.map(m=>`<li>${escapeHTML(m)}</li>`).join('')}</ul></div>`:''}
+    <div style="margin-top:30px;text-align:center;color:#888">— ${escapeHTML(DB.settings.clinic)} — ${escapeHTML(DB.settings.doctor)} —</div>
+  </div>`;
+  const w=window.open('','_blank');w.document.write(html);w.document.close();setTimeout(()=>w.print(),300);
+};
+
+/* ===== SEARCH ===== */
+pages.search=(root)=>{
+  let q='';
+  const render=()=>{
+    const list=DB.patients.filter(p=>!q || p.name.includes(q) || String(p.fileNo).includes(q));
+    root.innerHTML=`<div class="page"><div class="page-head"><div class="title">${iconSearch()} بحث المرضى</div></div>
+    <div class="page-body">
+      <div class="row"><label>بحث:</label><input id="q" value="${escapeHTML(q)}" placeholder="اسم المريض أو رقم الملف"/></div>
+      <table style="margin-top:10px"><thead><tr><th>ملف</th><th>الاسم</th><th>السن</th><th>النوع</th><th>الهاتف</th><th>الزيارات</th><th>فتح</th></tr></thead>
+        <tbody>${list.length?list.map(p=>`<tr><td>${p.fileNo}</td><td>${escapeHTML(p.name)}</td><td>${p.age||''}</td><td>${p.gender==='female'?'أنثى':'ذكر'}</td><td>${escapeHTML(p.phone||'')}</td><td>${DB.visits.filter(v=>v.patientId===p.id).length}</td>
+        <td><button class="btn primary" data-id="${p.id}">فتح</button></td></tr>`).join(''):`<tr><td colspan="7" class="empty">لا توجد نتائج</td></tr>`}</tbody></table>
+      <div class="toolbar"><button class="btn" onclick="go('home')">رجوع</button></div>
+    </div></div>`;
+    $('#q').oninput=e=>{q=e.target.value;render()};
+    $$('button[data-id]',root).forEach(b=>b.onclick=()=>{const p=DB.patients.find(x=>x.id===b.dataset.id);const bk=DB.bookings.find(x=>x.patientId===p.id);go('examForm',bk||{patientId:p.id,name:p.name})});
+  };render();
+};
+
+/* ===== OPERATIONS ===== */
+pages.operations=(root)=>{
+  if (!DB.operations) DB.operations = [];
+  let ops = DB.operations;
+  let q='';
+  const render=()=>{
+    const list=ops.filter(o=>!q || (o.patient||'').includes(q));
+    root.innerHTML=`<div class="page"><div class="page-head"><div class="title">${iconUser()} العمليات</div></div>
+    <div class="page-body">
+      <div class="row"><label>بحث:</label><input id="q" value="${escapeHTML(q)}"/></div>
+      <table style="margin-top:10px"><thead><tr><th>#</th><th>التاريخ</th><th>المريض</th><th>العملية</th><th>التكلفة</th><th>الحالة</th></tr></thead>
+        <tbody>${list.length?list.map((o,i)=>`<tr><td>${i+1}</td><td>${o.date}</td><td>${escapeHTML(o.patient)}</td><td>${escapeHTML(o.name)}</td><td>${o.cost}</td><td>${escapeHTML(o.status)}</td></tr>`).join(''):`<tr><td colspan="6" class="empty">—</td></tr>`}</tbody></table>
+      <div class="toolbar">
+        <button class="btn success" id="add">${iconPlus()} إضافة عملية</button>
+        <button class="btn" onclick="go('home')">رجوع</button>
+      </div>
+    </div></div>`;
+    $('#q').oninput=e=>{q=e.target.value;render()};
+    $('#add').onclick=()=>{
+      modal({title:'إضافة عملية',body:`<div class="grid2">
+        <div><label>التاريخ</label><input type="date" id="o-d" value="${todayISO()}"/></div>
+        <div><label>المريض</label><input id="o-p"/></div>
+        <div><label>العملية</label><input id="o-n"/></div>
+        <div><label>التكلفة</label><input type="number" id="o-c" value="0"/></div>
+        <div><label>الحالة</label><select id="o-s"><option>مجدولة</option><option>تمت</option><option>ملغاة</option></select></div>
+      </div>`,foot:`<button class="btn" onclick="closeModal()">إلغاء</button><button class="btn success" id="sv">حفظ</button>`});
+      $('#sv').onclick=()=>{
+        ops.push({id:uid(),date:$('#o-d').value,patient:$('#o-p').value,name:$('#o-n').value,cost:+$('#o-c').value,status:$('#o-s').value});
+        addLog('إضافة عملية '+$('#o-n').value);
+        save();closeModal();render();toast('تم');
+      };
+    };
+  };
+  render();
+};
+
+/* ===== DUES ===== */
+pages.dues=(root)=>{
+  const due=DB.bookings.map(b=>({b,bal:(b.total||0)-(b.paid||0)-(b.discount||0)})).filter(x=>x.bal>0);
+  root.innerHTML=`<div class="page"><div class="page-head"><div class="title">${iconMoney()} المستحقات</div>
+    <div class="right"><div class="chip">إجمالي المستحق: <span class="num">${due.reduce((s,x)=>s+x.bal,0)}</span></div></div></div>
+  <div class="page-body">
+    <table><thead><tr><th>#</th><th>التاريخ</th><th>المريض</th><th>الهاتف</th><th>إجمالي</th><th>مدفوع</th><th>باقي</th><th>سداد</th></tr></thead>
+      <tbody>${due.length?due.map((x,i)=>`<tr><td>${i+1}</td><td>${x.b.date}</td><td>${escapeHTML(x.b.name)}</td><td>${escapeHTML(x.b.phone||'-')}</td><td>${x.b.total}</td><td>${x.b.paid||0}</td><td><b>${x.bal}</b></td><td><button class="btn success" data-id="${x.b.id}" data-bal="${x.bal}">سداد</button></td></tr>`).join(''):`<tr><td colspan="8" class="empty">لا توجد مستحقات</td></tr>`}</tbody></table>
+    <div class="toolbar"><button class="btn" onclick="go('home')">رجوع</button></div></div></div>`;
+  $$('button[data-id]',root).forEach(b=>b.onclick=()=>{
+    const maxPay = +b.dataset.bal;
+    const v = +prompt(`المبلغ المسدد (الحد الأقصى ${maxPay}):`, maxPay);
+    if (!v || v <= 0) return;
+    if (v > maxPay) { toast('المبلغ يتجاوز المستحق'); return; }
+    const bk = DB.bookings.find(x=>x.id===b.dataset.id);
+    bk.paid = (bk.paid||0) + v;
+    DB.cash.push({id:uid(),date:todayISO(),type:'in',amount:v,note:'سداد متأخر - '+bk.name});
+    addLog('سداد متأخر '+bk.name+' مبلغ '+v);
+    save();go('dues');toast('تم السداد');
+  });
+};
+
+/* ===== CASH ===== */
+pages.cash=(root)=>{
+  let from=todayISO(),to=todayISO();
+  const render=()=>{
+    const list=DB.cash.filter(c=>c.date>=from&&c.date<=to);
+    const inS=list.filter(x=>x.type==='in').reduce((s,x)=>s+x.amount,0);
+    const outS=list.filter(x=>x.type==='out').reduce((s,x)=>s+x.amount,0);
+    root.innerHTML=`<div class="page"><div class="page-head"><div class="title">${iconSafe()} الخزينة</div>
+      <div class="right"><div class="chip">داخل: <span class="num">${inS}</span></div><div class="chip">خارج: <span class="num">${outS}</span></div><div class="chip">صافي: <span class="num">${inS-outS}</span></div></div></div>
+    <div class="page-body">
+      <div class="row"><label>من</label><input type="date" id="f" value="${from}"/><label>إلى</label><input type="date" id="t" value="${to}"/>
+        <button class="btn success" id="add">${iconPlus()} إضافة حركة</button></div>
+      <table style="margin-top:10px"><thead><tr><th>#</th><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>البيان</th><th>حذف</th></tr></thead>
+        <tbody>${list.length?list.map((c,i)=>`<tr><td>${i+1}</td><td>${c.date}</td><td>${c.type==='in'?'وارد':'منصرف'}</td><td>${c.amount}</td><td>${escapeHTML(c.note||'')}</td><td><button class="btn danger" data-id="${c.id}">×</button></td></tr>`).join(''):`<tr><td colspan="6" class="empty">—</td></tr>`}</tbody></table>
+      <div class="toolbar"><button class="btn" onclick="go('home')">رجوع</button></div>
+    </div></div>`;
+    $('#f').onchange=e=>{from=e.target.value;render()};
+    $('#t').onchange=e=>{to=e.target.value;render()};
+    $('#add').onclick=()=>{
+      modal({title:'حركة خزينة',body:`<div class="grid2">
+        <div><label>التاريخ</label><input type="date" id="c-d" value="${todayISO()}"/></div>
+        <div><label>النوع</label><select id="c-t"><option value="in">وارد</option><option value="out">منصرف</option></select></div>
+        <div><label>المبلغ</label><input type="number" id="c-a" value="0"/></div>
+        <div><label>البيان</label><input id="c-n"/></div></div>`,foot:`<button class="btn" onclick="closeModal()">إلغاء</button><button class="btn success" id="sv">حفظ</button>`});
+      $('#sv').onclick=()=>{DB.cash.push({id:uid(),date:$('#c-d').value,type:$('#c-t').value,amount:+$('#c-a').value,note:$('#c-n').value});addLog('حركة خزينة');save();closeModal();render();toast('تم')};
+    };
+    $$('button[data-id]',root).forEach(b=>b.onclick=()=>confirmBox('حذف الحركة؟',()=>{DB.cash=DB.cash.filter(x=>x.id!==b.dataset.id);save();render()}));
+  };render();
+};
+
+/* ===== PURCHASES ===== */
+pages.purchases=(root)=>{
+  const list=DB.purchases;
+  root.innerHTML=`<div class="page"><div class="page-head"><div class="title">${iconBox()} المشتريات</div></div>
+  <div class="page-body">
+    <table><thead><tr><th>#</th><th>التاريخ</th><th>الصنف</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th><th>المورد</th><th>حذف</th></tr></thead>
+      <tbody>${list.length?list.map((p,i)=>`<tr><td>${i+1}</td><td>${p.date}</td><td>${escapeHTML(p.item)}</td><td>${p.qty}</td><td>${p.price}</td><td>${p.qty*p.price}</td><td>${escapeHTML(p.vendor||'')}</td><td><button class="btn danger" data-id="${p.id}">×</button></td></tr>`).join(''):`<tr><td colspan="8" class="empty">—</td></tr>`}</tbody></table>
+    <div class="toolbar">
+      <button class="btn success" id="add">${iconPlus()} إضافة</button>
+      <button class="btn" onclick="go('home')">رجوع</button>
+    </div></div></div>`;
+  $('#add').onclick=()=>{
+    modal({title:'فاتورة مشتريات',body:`<div class="grid2">
+      <div><label>التاريخ</label><input type="date" id="p-d" value="${todayISO()}"/></div>
+      <div><label>الصنف</label><input id="p-i"/></div>
+      <div><label>الكمية</label><input type="number" id="p-q" value="1"/></div>
+      <div><label>السعر</label><input type="number" id="p-p" value="0"/></div>
+      <div><label>المورد</label><input id="p-v"/></div></div>`,foot:`<button class="btn" onclick="closeModal()">إلغاء</button><button class="btn success" id="sv">حفظ</button>`});
+    $('#sv').onclick=()=>{const p={id:uid(),date:$('#p-d').value,item:$('#p-i').value,qty:+$('#p-q').value,price:+$('#p-p').value,vendor:$('#p-v').value};DB.purchases.push(p);DB.cash.push({id:uid(),date:p.date,type:'out',amount:p.qty*p.price,note:'مشتريات - '+p.item});addLog('إضافة فاتورة مشتريات');save();closeModal();go('purchases');toast('تم')};
+  };
+  $$('button[data-id]',root).forEach(b=>b.onclick=()=>confirmBox('حذف؟',()=>{DB.purchases=DB.purchases.filter(x=>x.id!==b.dataset.id);save();go('purchases')}));
+};
+
+/* ===== STATS ===== */
+pages.stats=(root)=>{
+  const today=todayISO();
+  const todayBk=DB.bookings.filter(b=>b.date===today);
+  const monthKey=today.slice(0,7);
+  const monthBk=DB.bookings.filter(b=>b.date.startsWith(monthKey));
+  const monthIncome=DB.cash.filter(c=>c.date.startsWith(monthKey)&&c.type==='in').reduce((s,x)=>s+x.amount,0);
+  const monthOut=DB.cash.filter(c=>c.date.startsWith(monthKey)&&c.type==='out').reduce((s,x)=>s+x.amount,0);
+  const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10))}
+  const counts=days.map(d=>DB.bookings.filter(b=>b.date===d).length);
+  const max=Math.max(1,...counts);
+  root.innerHTML=`<div class="page"><div class="page-head"><div class="title">${iconChart()} إحصائيات</div></div>
+  <div class="page-body">
+    <div class="grid4">
+      <div class="stat"><div class="n">${todayBk.length}</div><div class="l">حجوزات اليوم</div></div>
+      <div class="stat"><div class="n">${monthBk.length}</div><div class="l">حجوزات الشهر</div></div>
+      <div class="stat"><div class="n">${monthIncome}</div><div class="l">إيراد الشهر</div></div>
+      <div class="stat"><div class="n">${monthIncome-monthOut}</div><div class="l">صافي الشهر</div></div>
+    </div>
+    <div class="panel" style="margin-top:14px"><h3>حجوزات آخر 7 أيام</h3>
+      <div style="display:flex;gap:8px;align-items:flex-end;height:180px;padding:10px;direction:ltr">
+        ${counts.map((c,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="background:linear-gradient(180deg,#1e6fbf,#0f4f8f);width:100%;height:${(c/max)*150}px;border-radius:4px 4px 0 0;color:#fff;display:flex;align-items:flex-start;justify-content:center;font-size:11px;padding:2px">${c||''}</div>
+          <div style="font-size:11px;color:var(--muted)">${days[i].slice(5)}</div>
+        </div>`).join('')}
+      </div></div>
+    <div class="toolbar"><button class="btn" onclick="go('home')">رجوع</button></div>
+  </div></div>`;
+};
+
+/* ===== USERS ===== */
+pages.users=(root)=>{
+  const render=()=>{
+    root.innerHTML=`<div class="page"><div class="page-head"><div class="title">${iconUserSwitch()} المستخدمين</div></div>
+    <div class="page-body"><table><thead><tr><th>#</th><th>المستخدم</th><th>الصلاحية</th><th>حذف</th></tr></thead>
+      <tbody>${DB.users.map((u,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(u.u)}</td><td>${u.role}</td><td>${u.u==='ADMIN'?'-':`<button class="btn danger" data-u="${u.u}">×</button>`}</td></tr>`).join('')}</tbody></table>
+      <div class="toolbar">
+        <button class="btn success" id="add">${iconPlus()} مستخدم</button>
+        <button class="btn" onclick="go('home')">رجوع</button>
+      </div></div></div>`;
+    $('#add').onclick=()=>{
+      modal({title:'مستخدم جديد',body:`<div class="grid2">
+        <div><label>الاسم</label><input id="u-u"/></div>
+        <div><label>كلمة المرور</label><input id="u-p"/></div>
+        <div><label>الصلاحية</label><select id="u-r"><option>user</option><option>admin</option></select></div></div>`,foot:`<button class="btn" onclick="closeModal()">إلغاء</button><button class="btn success" id="sv">حفظ</button>`});
+      $('#sv').onclick=()=>{
+        const u=$('#u-u').value.trim();
+        if(!u)return toast('اسم المستخدم مطلوب');
+        DB.users.push({u, p:$('#u-p').value, role:$('#u-r').value});
+        addLog('إضافة مستخدم '+u);
+        save();closeModal();render();
+      };
+    };
+    $$('button[data-u]',root).forEach(b=>b.onclick=()=>{DB.users=DB.users.filter(x=>x.u!==b.dataset.u);addLog('حذف مستخدم '+b.dataset.u);save();render()});
+  };render();
+};
+
+/* ===== DATA ===== */
+pages.data=(root)=>{
+  root.innerHTML=`<div class="page"><div class="page-head"><div class="title">${iconFolder()} البيانات</div></div>
+  <div class="page-body"><div class="grid3">
+    <div class="panel"><h3>المرضى (${DB.patients.length})</h3><div style="max-height:300px;overflow:auto">${DB.patients.map(p=>`<div style="padding:6px;border-bottom:1px solid #eee">${p.fileNo} - ${escapeHTML(p.name)}</div>`).join('')||'<div class="empty">—</div>'}</div></div>
+    <div class="panel"><h3>الحجوزات (${DB.bookings.length})</h3><div style="max-height:300px;overflow:auto">${DB.bookings.slice(-30).reverse().map(b=>`<div style="padding:6px;border-bottom:1px solid #eee">${b.date} - ${escapeHTML(b.name)}</div>`).join('')||'<div class="empty">—</div>'}</div></div>
+    <div class="panel"><h3>الزيارات (${DB.visits.length})</h3><div style="max-height:300px;overflow:auto">${DB.visits.slice(-30).reverse().map(v=>{const p=DB.patients.find(x=>x.id===v.patientId);return `<div style="padding:6px;border-bottom:1px solid #eee">${v.date} - ${p?escapeHTML(p.name):'-'}</div>`}).join('')||'<div class="empty">—</div>'}</div></div>
+  </div>
+  <div class="toolbar">
+    <button class="btn primary" onclick="exportData()">${iconSave()} تصدير نسخة احتياطية</button>
+    <button class="btn warn" onclick="importData()">استرداد نسخة</button>
+    <button class="btn danger" onclick="resetData()">حذف كل البيانات</button>
+    <button class="btn" onclick="go('home')">رجوع</button>
+  </div></div></div>`;
+};
+
+/* ===== LOG ===== */
+pages.log=(root)=>{
+  const logs=DB.log||[];
+  root.innerHTML=`<div class="page"><div class="page-head"><div class="title">${iconLog()} سجل النشاطات</div></div>
+  <div class="page-body">
+    <div style="max-height:500px;overflow:auto;background:#fafafa;border:1px solid var(--border);border-radius:6px;padding:8px">
+      ${logs.length?logs.slice(-100).reverse().map(l=>`<div class="log-entry">${new Date(l.time).toLocaleString('en-GB')} : ${escapeHTML(l.msg)}</div>`).join(''):'<div class="empty">لا توجد نشاطات</div>'}
+    </div>
+    <div class="toolbar"><button class="btn danger" id="clearLog">مسح السجل</button><button class="btn" onclick="go('home')">رجوع</button></div>
+  </div></div>`;
+  $('#clearLog').onclick=()=>{confirmBox('مسح كل السجل؟',()=>{DB.log=[];save();go('log')})};
+};
+
+function exportData(){const b=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='clinic-backup-'+todayISO()+'.json';a.click();URL.revokeObjectURL(u)}
+function importData(){const i=document.createElement('input');i.type='file';i.accept='application/json';i.onchange=()=>{const f=i.files[0];const r=new FileReader();r.onload=()=>{try{DB=JSON.parse(r.result);save();toast('تم الاسترداد');go('home')}catch{toast('ملف غير صالح')}};r.readAsText(f)};i.click()}
+function resetData(){confirmBox('سيتم حذف جميع البيانات نهائياً، متابعة؟',()=>{DB=structuredClone(defaultDB);save();toast('تم الحذف');go('home')})}
+
+/* ===== SETTINGS ===== */
+pages.settings=(root)=>{
+  const s=DB.settings;
+  const render=()=>{
+    root.innerHTML=`<div class="page"><div class="page-head"><div class="title">${iconGear()} الإعدادات</div></div>
+    <div class="page-body"><div class="grid2">
+      <div class="panel"><h3>إعدادات عامة</h3>
+        <div class="row"><label>اسم العيادة</label><input id="s-c" value="${escapeHTML(s.clinic)}"/></div>
+        <div class="row"><label>اسم الطبيب</label><input id="s-d" value="${escapeHTML(s.doctor)}"/></div>
+        <div class="row"><label>سعر الكشف</label><input type="number" id="s-p" value="${s.price}"/></div>
+        <div class="row"><label>رقم الفرع</label><input type="number" id="s-b" value="${s.branch}"/></div>
+        <div><label>قالب رسالة WhatsApp</label><textarea id="s-w" rows="3" style="width:100%">${escapeHTML(s.waMsg)}</textarea></div>
+      </div>
+      <div class="panel"><h3>الأدوية ( ${s.medicines.length} )</h3>
+        <div id="meds" style="max-height:200px;overflow:auto">${s.medicines.map((m,i)=>`<div style="display:flex;gap:6px;padding:3px"><input value="${escapeHTML(m)}" data-i="${i}"/><button class="btn danger" data-del="${i}">×</button></div>`).join('')}</div>
+        <div class="row" style="margin-top:8px"><input id="new-med" placeholder="دواء جديد" style="flex:1"/><button class="btn success" id="add-med">${iconPlus()} إضافة</button></div>
+      </div>
+      <div class="panel"><h3>قوالب التعليمات</h3>
+        <div id="ins" style="max-height:200px;overflow:auto">${s.instructionsTemplates.map((m,i)=>`<div style="display:flex;gap:6px;padding:3px"><input value="${escapeHTML(m)}" data-ii="${i}"/><button class="btn danger" data-din="${i}">×</button></div>`).join('')}</div>
+        <div class="row" style="margin-top:8px"><input id="new-ins" placeholder="تعليمة جديدة" style="flex:1"/><button class="btn success" id="add-ins">${iconPlus()} إضافة</button></div>
+      </div>
+      <div class="panel"><h3>مجموعات التحاليل</h3>
+        <div id="labs" style="max-height:200px;overflow:auto">${s.labsTemplates.map((g,i)=>`<div style="padding:6px;border-bottom:1px solid #eee"><b>${escapeHTML(g.group)}</b>: ${g.tests.map(escapeHTML).join('، ')} <button class="btn danger" data-dlg="${i}" style="float:left">×</button></div>`).join('')}</div>
+        <div class="row" style="margin-top:8px"><input id="new-lg" placeholder="اسم المجموعة"/><input id="new-lt" placeholder="تحاليل (مفصولة بفاصلة)" style="flex:1"/><button class="btn success" id="add-lg">${iconPlus()} إضافة</button></div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn success" id="save-all">${iconSave()} حفظ الإعدادات</button>
+      <button class="btn" onclick="go('home')">رجوع</button>
+    </div></div></div>`;
+    $('#save-all').onclick=()=>{
+      s.clinic=$('#s-c').value;s.doctor=$('#s-d').value;s.price=+$('#s-p').value;s.branch=+$('#s-b').value;s.waMsg=$('#s-w').value;
+      $$('input[data-i]').forEach(i=>s.medicines[+i.dataset.i]=i.value);
+      $$('input[data-ii]').forEach(i=>s.instructionsTemplates[+i.dataset.ii]=i.value);
+      addLog('تحديث الإعدادات');save();$('#sb-clinic').textContent=s.clinic;toast('تم حفظ الإعدادات');
+    };
+    $('#add-med').onclick=()=>{const v=$('#new-med').value.trim();if(v){s.medicines.push(v);save();render()}};
+    $('#add-ins').onclick=()=>{const v=$('#new-ins').value.trim();if(v){s.instructionsTemplates.push(v);save();render()}};
+    $('#add-lg').onclick=()=>{const g=$('#new-lg').value.trim(),t=$('#new-lt').value.split(',').map(x=>x.trim()).filter(Boolean);if(g&&t.length){s.labsTemplates.push({group:g,tests:t});save();render()}};
+    $$('button[data-del]').forEach(b=>b.onclick=()=>{s.medicines.splice(+b.dataset.del,1);save();render()});
+    $$('button[data-din]').forEach(b=>b.onclick=()=>{s.instructionsTemplates.splice(+b.dataset.din,1);save();render()});
+    $$('button[data-dlg]').forEach(b=>b.onclick=()=>{s.labsTemplates.splice(+b.dataset.dlg,1);save();render()});
+  };render();
+};
+
+/* ===== Icons ===== */
+function iconCalendar(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>`}
+function iconStethoscope(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v6a4 4 0 0 0 8 0V3"/><path d="M10 13v3a5 5 0 0 0 10 0v-2"/><circle cx="20" cy="11" r="2"/></svg>`}
+function iconUser(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>`}
+function iconSearch(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`}
+function iconMoney(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>`}
+function iconSafe(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="14" cy="12" r="3"/><path d="M14 9v-1M14 15v1"/></svg>`}
+function iconBox(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>`}
+function iconChart(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>`}
+function iconUserSwitch(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="9" r="3"/><path d="M5 20v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1"/><path d="m17 4 3 2-3 2"/></svg>`}
+function iconFolder(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>`}
+function iconLog(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 12h4M8 8h8M8 16h2"/></svg>`}
+function iconGear(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`}
+function iconExit(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M21 5v14"/></svg>`}
+function iconPlus(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`}
+function iconEdit(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"/></svg>`}
+function iconTrash(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>`}
+function iconSave(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>`}
+function iconPrint(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>`}
+function iconCheck(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 5 5L20 7"/></svg>`}
+function iconWa(){return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4A10 10 0 0 0 4 17l-1 4 4-1A10 10 0 1 0 20 4zm-4 12c-1 0-3-1-4-2s-3-3-2-5l1-1 2 2-1 1c0 1 1 2 2 3s2 1 3 1l1-1 2 2-1 1c-1 1-2 1-3 0z"/></svg>`}
+
+/* ===== LOGIN (مصححة تماماً) ===== */
+function doLogin(){
+  const u=$('#lg-user').value.trim(), p=$('#lg-pass').value;
+  const user=DB.users.find(x=>x.u.toLowerCase()===u.toLowerCase() && x.p===p);
+  if(!user) return toast('بيانات الدخول غير صحيحة');
+  addLog('تسجيل دخول '+u);
+  save();
+  $('#login').classList.add('hide');
+  $('#sb-user').textContent=user.u;
+  go('home');
+}
+function logout(){addLog('تسجيل خروج');$('#login').classList.remove('hide')}
+
+function refreshMini(){
+  const t=todayISO();
+  const td=DB.bookings.filter(b=>b.date===t);
+  $('#mini-today').textContent=td.length;
+  $('#mini-wait').textContent=td.filter(b=>b.status==='wait').length;
+  $('#mini-pat').textContent=DB.patients.length;
+  $('#mini-cash').textContent=DB.cash.filter(c=>c.date===t&&c.type==='in').reduce((s,x)=>s+x.amount,0);
+  $('#sb-clinic').textContent=DB.settings.clinic;
+  $('#sb-date').textContent=fmtDate(new Date());
+}
+refreshMini();
+</script>
+</body>
+</html>
